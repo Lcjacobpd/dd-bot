@@ -8,6 +8,10 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 client = discord.Client()
 
+# Custom emojis
+heyo = '<:heyo:829028736162201700>'
+nat1 = '<:nat1:818628379967356960>'
+nat20 = '<:nat20:818628403119783957>'
 
 class DiceRoll:
     def __init__(self, userName: str, message: str):      
@@ -144,9 +148,9 @@ def memeSearch(message):
         'rockandstone': 'For Karl!',
         'thisbotsucks': 'No u.',
         'dumbbot': 'No u.',
-        'goodjobson': '👈 😎 👈',
+        'goodjobson': heyo,
         'fuckyou': 'No u.',
-        'thatsmyboy': '👈 😎 👈'
+        'thatsmyboy': heyo
     }
 
     if key in library:
@@ -154,7 +158,7 @@ def memeSearch(message):
         meme = library[key]
 
         # Special user case.
-        if meme == '👈 😎 👈' and str(message.author) != 'Lcjacobpd#1099':
+        if meme == heyo and str(message.author) != 'Lcjacobpd#1099':
             meme = 'You ain\'t my dad.'
 
         return meme
@@ -175,11 +179,11 @@ async def on_message(message):
         # React if it was a bad dice roll
         if 'Rolling 1d20' in message.content and message.content.endswith('> 1'):
             await message.add_reaction('🇫')
-            await message.add_reaction('nat1:818628379967356960')
+            await message.add_reaction(nat1) 
 
         # React if it was a bad dice roll
         if 'Rolling 1d20' in message.content and message.content.endswith('> 20'):
-            await message.add_reaction('nat20:818628403119783957')
+            await message.add_reaction(nat20)
         return
 
     # Check for dice roll
@@ -191,6 +195,7 @@ async def on_message(message):
     meme = memeSearch(message)
     if meme is not None:
         await message.channel.send(meme)
+
 
 # Main body
 client.run(TOKEN)
