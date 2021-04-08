@@ -32,8 +32,6 @@ the method will return the response.
 library = {
     'hellothere': 'General Kenobi!',
     'iamthesenete': 'Not yet.',
-    'whatelsedoesitdo': 'Your mom.',
-    'whatelsecanitdo': 'Your mom.',
     'rockandstone': 'For Karl!'
 }
 ```
