@@ -177,12 +177,12 @@ async def on_message(message):
     if message.author == client.user:
 
         # React if it was a bad dice roll
-        if 'Rolling 1d20' in message.content and message.content.endswith('> 1'):
+        if 'Rolling 1d20...' in message.content and message.content.endswith('> 1'):
             await message.add_reaction('🇫')
             await message.add_reaction(nat1) 
 
         # React if it was a bad dice roll
-        if 'Rolling 1d20' in message.content and message.content.endswith('> 20'):
+        if 'Rolling 1d20...' in message.content and message.content.endswith('> 20'):
             await message.add_reaction(nat20)
         return
 
