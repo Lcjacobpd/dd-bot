@@ -3,6 +3,7 @@ import discord
 from dotenv import load_dotenv
 
 from fate import DiceRoll
+from games import TicTacToe
 from reply import Reaction
 from reply import Echo
 from reply import memeSearch
@@ -11,6 +12,12 @@ from reply import memeSearch
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 client = discord.Client()
+
+'''
+Global
+'''
+ttt = TicTacToe()
+
 
 '''
 Listeners
@@ -57,7 +64,22 @@ async def on_message(message):
         else:
             pass
 
+    if message.content.startswith('ttt'):
+        ttt.build(message)
+        await message.channel.send(ttt.display())
+
     print ('  > Done.')
+
+@client.event
+async def on_reaction_add(reaction, user):
+    message = reaction.message
+    atee = message.content.split('\n')[0][3:-1]
+
+    if str(message.author) == 'Fate#8091' and str(user.id) == atee:
+        await message.clear_reactions()
+        update = ttt.edit(reaction)
+        if update != None:
+            await message.edit(content=update)
 
 # Main body
 client.run(TOKEN)
