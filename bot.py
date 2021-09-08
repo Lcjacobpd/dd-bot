@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import os
 import discord
 from dotenv import load_dotenv
@@ -7,6 +8,8 @@ from games import TicTacToe
 from reply import Reaction
 from reply import Echo
 from reply import memeSearch
+
+from destiny2 import today
 
 
 load_dotenv()
@@ -47,6 +50,10 @@ async def on_message(message):
     fate = DiceRoll(message.author, message.content)
     if fate.message != '':
         await message.channel.send(fate.message)
+
+    d2 = today(message.content)
+    if d2 != NULL:
+        await message.channel.send(d2)
 
     # Check for meme reference
     meme = memeSearch(message)
