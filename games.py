@@ -53,7 +53,7 @@ class TicTacToe:
         if sum(self.board) == 13:
             return msg + '\n It\'s a draw!'
 
-        return f'{self.players[self.active]}\n' + msg
+        return f'{self.players[self.active]}\n' + msg + "   *React with 1️⃣-9️⃣ to play!*"
 
     def edit(self, reaction):
         reaction = str(reaction)
