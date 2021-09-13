@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 import os
 import discord
 from dotenv import load_dotenv
@@ -9,7 +8,8 @@ from reply import Reaction
 from reply import Echo
 from reply import memeSearch
 
-from destiny2 import today
+from destiny2 import todaysNews
+from destiny2 import newReminder
 
 
 load_dotenv()
@@ -20,6 +20,10 @@ client = discord.Client()
 Global
 '''
 ttt = TicTacToe()
+
+# 'name': 'mark1, mark2, ..'
+guardians = {}
+fetchGuardians()
 
 
 '''
@@ -51,9 +55,19 @@ async def on_message(message):
     if fate.message != '':
         await message.channel.send(fate.message)
 
-    d2 = today(message.content)
-    if d2 != NULL:
+    # Check for Destiny 2 news call
+    d2 = todaysNews(message.content)
+    if d2 != None:
         await message.channel.send(d2)
+
+    # Check for Destiny reminder setup
+    d2reminder = newReminder(message.author, message.content)
+    if d2reminder != None:
+        await message.channel.send(d2reminder)
+
+    d2clear = clearReminder(message.author)
+    if d2clear != None:
+        await message.channel.send(d2clear)
 
     # Check for meme reference
     meme = memeSearch(message)

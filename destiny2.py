@@ -1,23 +1,24 @@
-from asyncio.windows_events import NULL
-from os import readlink
 import re
 import requests
 from bs4 import BeautifulSoup
 from datetime import date
 
-def today(message: str):
-    if message != 'D2':
-        return NULL  # Not a destiny 2 search
+def todaysNews(message: str) -> str:
+    if message.lower() != 'd2 news':
+        return None  # Not a destiny 2 search.
     else:
         print('  > Guardians make their own fate!')
 
     news = LostSectors()
-    news += '\n'
-    news += Ada()
+    news += '\n' + Ada()
+    news += '\n' + Xur()
+
+    # Review news for mentions.
+    news += NotifyWho(news)
 
     return news
 
-def LostSectors():
+def LostSectors() -> str:
     print('  > Scouring lost sectors...')
 
     url = 'https://kyberscorner.com/destiny2/lost-sectors/'
@@ -40,8 +41,7 @@ def LostSectors():
 
         return msg[:-3]
 
-
-def Ada():
+def Ada() -> str:
     print('  > Contacting Ada...')
 
     url = 'https://www.todayindestiny.com/vendors'
@@ -70,4 +70,77 @@ def Ada():
         return ada
 
 
-#def Xur():
+def Xur():
+    print('  > Locating Xur...')
+    # TODO: impliment Xur
+
+
+def saveGuardians() -> None:
+    with open('guardians.txt', 'w') as out_file:
+        for name, marks in guardians.items():
+            out_file.write(f"{name}:{marks}\n")
+    
+def fetchGuardians() -> None:
+    try:
+        print('  > Listing Guardians...')
+        with open('guardians.txt', 'r') as in_file:
+            lines = in_file.readlines()
+            for line in lines:
+                name = line[:-1].split(':')[0]
+                marks = line[:-1].split(':')[1]
+                guardians[name] = marks
+    except:
+        print('  > Lost to the dark corners of time!')
+
+
+# 'name': 'mark1, mark2, ..'
+#guardians = {}
+#fetchGuardians()
+
+
+def newReminder(user: str, message: str) -> str:
+    """Add d2 reminder for user"""                       # Just for Yoder.
+    if message.toLowerCase().startswith("remind me:") or message.toLowerCase().startswith("pingus:"):
+        print('  > Preparing reminder...')
+    else:
+        return None # Not a D2 reminder.
+
+    newI = [i.strip() for i in message.split(':')[1].split(',')]
+
+    # Perform union if already present.
+    if user in guardians.keys():
+        oldI = [j.strip() for j in guardians[user].split(',')]
+        newI = list(set(oldI) | set(newI))
+
+    guardians[user] = ",".join(newI)
+    saveGuardians()
+
+    return f"> *{user}'s Reminders*\n> {guardians[user]}"
+
+def clearNotice(user: str) -> None:
+    """Remove guardian & all notices"""
+    if message.toLowerCase().startswith("clear reminders") or message.toLowerCase().startswith("transmat firing"):
+        print('  > Purging reminders...')
+        guardians.pop(user, None)
+        saveGuardians()
+        return "Reminders cleared"
+        
+    else:
+        return None # Not a D2 clear reminder.
+    
+    
+    
+def NotifyWho(news: str) -> str:
+    """ Search news for Guardian keywords"""
+    informees = []
+    for name, marks in guardians.items():
+        for mark in marks.split(','):
+            if mark.strip().lower() in news.lower():
+                informees.append(name)
+                break
+    
+    # Format @ mentions.
+    mentions = ''
+    for person in informees:
+        mentions += f"@{person} "
+    return "\n" + mentions
