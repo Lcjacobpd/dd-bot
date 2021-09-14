@@ -8,6 +8,9 @@ from reply import Reaction
 from reply import Echo
 from reply import memeSearch
 
+from destiny2 import todays_news
+from destiny2 import new_reminder
+
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -47,6 +50,20 @@ async def on_message(message):
     fate = DiceRoll(message.author, message.content)
     if fate.message != '':
         await message.channel.send(fate.message)
+
+    # Check for Destiny 2 news call
+    d2 = todays_news(message.content)
+    if d2 != "":
+        await message.channel.send(d2)
+
+    # Check for Destiny reminder setup
+    d2reminder = new_reminder(message.author, message.content)
+    if d2reminder != "":
+        await message.channel.send(d2reminder)
+
+    d2clear = clear_reminders(message.author)
+    if d2clear != "":
+        await message.channel.send(d2clear)
 
     # Check for meme reference
     meme = memeSearch(message)
