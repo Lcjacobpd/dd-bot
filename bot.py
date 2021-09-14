@@ -8,8 +8,8 @@ from reply import Reaction
 from reply import Echo
 from reply import memeSearch
 
-from destiny2 import todaysNews
-from destiny2 import newReminder
+from destiny2 import todays_news
+from destiny2 import new_reminder
 
 
 load_dotenv()
@@ -20,10 +20,6 @@ client = discord.Client()
 Global
 '''
 ttt = TicTacToe()
-
-# 'name': 'mark1, mark2, ..'
-guardians = {}
-fetchGuardians()
 
 
 '''
@@ -56,17 +52,17 @@ async def on_message(message):
         await message.channel.send(fate.message)
 
     # Check for Destiny 2 news call
-    d2 = todaysNews(message.content)
-    if d2 != None:
+    d2 = todays_news(message.content)
+    if d2 != "":
         await message.channel.send(d2)
 
     # Check for Destiny reminder setup
-    d2reminder = newReminder(message.author, message.content)
-    if d2reminder != None:
+    d2reminder = new_reminder(message.author, message.content)
+    if d2reminder != "":
         await message.channel.send(d2reminder)
 
-    d2clear = clearReminder(message.author)
-    if d2clear != None:
+    d2clear = clear_reminders(message.author)
+    if d2clear != "":
         await message.channel.send(d2clear)
 
     # Check for meme reference
