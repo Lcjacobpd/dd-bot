@@ -27,17 +27,38 @@ def LostSectors() -> str:
     resp = requests.get(url)
 
     if resp.status_code == 200:
+        # Find today's sectors
         soup = BeautifulSoup(resp.text, 'html.parser')
         row = soup.find('td', text=format_date).parent
 
+        # Format by tiers
         msg = ''
         sectors = ['Legend', 'Master']
         for cell in row:
+            tier = ""
+            place = ""
             if '(' in cell.text:
-                msg += f'> **{sectors.pop(0)} - {cell.text}**\n'
+                tier = sectors.pop(0)
+                place = cell.text.split('(')[0].replace(' ', '')
+                msg += f'> **{tier} - {place}**\n'
             if ',' in cell.text:
                 txt = f'{cell.text}'.replace(',', ':', 1)
                 msg += f'> {txt}\n> \n'
+
+            # Collect sector enemies by tier
+            if place != "":     
+                entry = soup.find_all('a', {'href': "http://kyber3000.com/LS-"+place})[-1].parent.parent
+                champ = [c for c in entry]
+                enemies = '> *'
+
+                if tier == 'Legend':
+                    enemies += ' '.join(re.findall(r'[A-Za-z]+: x[0-9]+', champ[1].text)) + ' | '
+                    enemies += ' '.join(re.findall(r'[A-Za-z]+: x[0-9]+', champ[2].text)) + '*\n'
+                elif tier == 'Master':
+                    enemies += ' '.join(re.findall(r'[A-Za-z]+: x[0-9]+', champ[3].text)) + ' | '
+                    enemies += ' '.join(re.findall(r'[A-Za-z]+: x[0-9]+', champ[4].text)) + '*\n'
+                               
+                msg += enemies
 
         return msg[:-3]
 
@@ -71,7 +92,8 @@ def Ada() -> str:
 
 
 def Xur():
-    print('  > Locating Xur...')
+    print('  > Locating Xur... (TODO)\n')
+    return ""
     # TODO: impliment Xur
 
 
@@ -144,3 +166,6 @@ def NotifyWho(news: str) -> str:
     for person in informees:
         mentions += f"@{person} "
     return "\n" + mentions
+
+guardians = {}
+print(todaysNews("d2 news"))
