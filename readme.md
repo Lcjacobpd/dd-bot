@@ -11,7 +11,7 @@ Destiny 2.
 ## Command Formatting
 
 All of the following are examples of valid command formats:
-```bash
+```
 roll d20     # Number of dice defaults to 1
 roLl d 6     # Ignores whitespace and letter case
 roll d20 -4  # Allows for modifiers
