@@ -35,7 +35,7 @@ class DiceRoll:
         self.decode(self.command)
 
         # Do not roll if invalid.
-        if self.result is -1:
+        if self.result == -1:
             return
 
         # Else: roll dice and display.

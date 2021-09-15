@@ -1,4 +1,5 @@
 import os
+import typing
 import discord
 from dotenv import load_dotenv
 
@@ -20,7 +21,7 @@ client = discord.Client()
 Global
 '''
 ttt = TicTacToe()
-
+guardians: typing.Dict[str, str] = {}
 
 '''
 Listeners

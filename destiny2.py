@@ -48,7 +48,8 @@ def lost_sectors() -> str:
             place = ""
             if '(' in cell.text:
                 tier = sectors.pop(0)
-                place = cell.text.split('(')[0].replace(' ', '')
+                test = cell.text.split('(')[0]
+                place = cell.text.split('(')[0]#.title().replace(' ', '')
                 msg += f'> **{tier} - {place}**\n'
             if ',' in cell.text:
                 txt = f'{cell.text}'.replace(',', ':', 1)
@@ -56,16 +57,18 @@ def lost_sectors() -> str:
 
             # Collect sector enemies by tier
             if place != "":
-                entry = soup.find_all('a', {
-                    'href': "http://kyber3000.com/LS-"+place
-                })[-1].parent.parent
-                champ = [c for c in entry]
+                sect_notes = soup.find('strong', text="Lost Sector").parent.parent.parent.find_all_next('a')
+                for s in sect_notes:
+                    if s.text == place:
+                        champ = list(s.parent.parent)
+                        
                 enemies = '> *'
                 patt = r'[A-Za-z]+: x[0-9]+'
 
                 if tier == 'Legend':
                     enemies += ' '.join(re.findall(patt, champ[1].text))+' | '
                     enemies += ' '.join(re.findall(patt, champ[2].text))+'*\n'
+                    
                 elif tier == 'Master':
                     enemies += ' '.join(re.findall(patt, champ[3].text))+' | '
                     enemies += ' '.join(re.findall(patt, champ[4].text))+'*\n'
@@ -191,3 +194,4 @@ def notify_who(news: str) -> str:
 # 'name': 'mark1, mark2, ..'
 guardians: typing.Dict[str, str] = {}
 fetch_guardians()
+#print(todays_news("d2 news"))
