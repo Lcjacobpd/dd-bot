@@ -56,15 +56,6 @@ async def on_message(message):
     if d2.check() != "":
         await message.channel.send(d2)
 
-    # Check for Destiny reminder setup
-    d2reminder = new_reminder(message.author, message.content)
-    if d2reminder != "":
-        await message.channel.send(d2reminder)
-
-    d2clear = clear_reminders(message.author)
-    if d2clear != "":
-        await message.channel.send(d2clear)
-
     # Check for meme reference
     meme = memeSearch(message)
     if meme is not None:

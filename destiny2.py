@@ -10,6 +10,7 @@ from datetime import date
 
 
 class Destiny:
+    """Wrapper for Destiny 2 interactions"""
     def __init__(self, author: str, message: str):
         self.user: str = author
         self.message: str = message.lower().strip()
@@ -19,6 +20,7 @@ class Destiny:
             self.fetch_guardians()
 
     def check(self) -> str:
+        """Return inquiry results"""
         msg = self.message
         # News case.
         if msg.lower() == "d2 news":
@@ -68,6 +70,7 @@ class Destiny:
         resp = requests.get(url)
 
         news += self.ask_ada(resp)
+        news += self.ask_spider(resp)
         news += self.ask_xur(resp)
 
         # Review news for bookmarks.
@@ -85,11 +88,11 @@ class Destiny:
         format_date = f"{today.month}/{today.day}/{today.year}"
 
         if resp.status_code == 200:
-            # Find today"s sectors
+            # Find today's sectors.
             soup = BeautifulSoup(resp.text, "html.parser")
             row = soup.find("td", text=format_date).parent
 
-            # Format by tiers
+            # Format by tiers.
             msg = ""
             sectors = ["Legend", "Master"]
             for cell in row:
@@ -97,39 +100,48 @@ class Destiny:
                 place = ""
                 if "(" in cell.text:
                     tier = sectors.pop(0)
-                    test = cell.text.split("(")[0]
-                    place = cell.text.split("(")[0]#.title().replace(" ", "")
+                    place = cell.text.split("(")[0]
                     msg += f"> **{tier} - {place}**\n"
                 if "," in cell.text:
-                    txt = f"{cell.text}".replace(",", ":", 1)
-                    msg += f"> {txt}\n> \n"
+                    msg += f"> {cell.text.replace(',', ':', 1)}\n> \n"
 
-                # Collect sector enemies by tier
-                try:
-                    if place != "":
-                        sect_notes = soup.find("strong", text="Lost Sector").parent.parent.parent.find_all_next("a")
-                        for s in sect_notes:
-                            if s.text == place:
-                                champ = list(s.parent.parent)
-                                
-                        enemies = "> *"
-                        patt = r"[A-Za-z]+: x[0-9]+"
-
-                        if tier == "Legend":
-                            enemies += " ".join(re.findall(patt, champ[1].text))+" | "
-                            enemies += " ".join(re.findall(patt, champ[2].text))+"*\n"
-                            
-                        elif tier == "Master":
-                            enemies += " ".join(re.findall(patt, champ[3].text))+" | "
-                            enemies += " ".join(re.findall(patt, champ[4].text))+"*\n"
-
-                        msg += enemies
-                except:
-                    print("  > Champions hidden...")
+                # Try for additional details.
+                msg += self.sector_enemies(soup, place, tier)
 
             return "\n" + msg[:-3]
         else:
-            return ""  # Error case.
+            return ""  # Error case: page unreachable.
+
+    def sector_enemies(self, soup, place, tier):
+        """Try to collect champion details if known"""
+        msg = ""
+        try:
+            if place != "":
+                sect_notes = soup.find("strong", text="Lost Sector")
+                sect_notes = sect_notes.parent.parent.parent
+                sect_notes = sect_notes.find_all_next("a")
+                for note in sect_notes:
+                    if note.text == place:
+                        champ = list(note.parent.parent)
+
+                enemies = "> *"
+                patt = r"[A-Za-z]+: x[0-9]+"
+
+                # Collect sector enemies by tier.
+                if tier == "Legend":
+                    enemies += " ".join(re.findall(patt, champ[1].text))+" | "
+                    enemies += " ".join(re.findall(patt, champ[2].text))+"*\n"
+
+                elif tier == "Master":
+                    enemies += " ".join(re.findall(patt, champ[3].text))+" | "
+                    enemies += " ".join(re.findall(patt, champ[4].text))+"*\n"
+
+                msg += enemies
+        except:
+            print("  > Champions hidden...")
+            msg = "> *Champions unknown | Shields unknown*\n"
+
+        return msg
 
     def ask_ada(self, resp) -> str:
         """Collect daily Ada sales"""
@@ -137,7 +149,7 @@ class Destiny:
         tagline = "Advanced Prototype Exo and warden of the Black Armory."
 
         if resp.status_code == 200:
-            # Parse page for Ada"s storefront.
+            # Parse page for Ada's storefront.
             soup = BeautifulSoup(resp.text, "html.parser")
             sales = soup.find("div", text=tagline).find_next("div", index=1)
             labels = sales.find_all_next("p", {"class": "modPerkLabel"})
@@ -162,6 +174,26 @@ class Destiny:
         else:
             return ""  # Error case: page unreachable.
 
+    def ask_spider(self, resp):
+        """Collect Spider's glimmer trade"""
+        print("  > Bribing Spider...")
+        tagline = "Unlike his Fallen brethren, the clever Spider prefers to negotiate instead of fight."
+
+        if resp.status_code == 200:
+            # Parse page for Ada's storefront.
+            soup = BeautifulSoup(resp.text, "html.parser")
+            sales = soup.find("div", text=tagline).find_next("div", index=3)
+            currency = sales.find_all_next("p", {"class": "tooltipCostName"})
+            cost = sales.find_all_next("p", {"class": "tooltipCostQuantity"})
+
+            spider = "\n> **Spider - Glimmer Trade**\n"
+            spider += f"> {cost[5].text} {currency[5].text}"
+            
+            return "\n" + spider
+        else:
+            return ""  # Error case: page unreachable.
+
+
     def ask_xur(self, resp):
         """Collect Xur location and Sales if present"""
         print("  > Locating Xur... (TODO)\n")
@@ -169,7 +201,7 @@ class Destiny:
         # TODO: impliment Xur
 
     def new_bookmarks(self) -> str:
-        """Adde new reminder to guardian"""
+        """Add new reminder to guardian"""
         print("  > Preparing reminder...")
         msg = self.message
         gdns = self.guardians
@@ -177,7 +209,7 @@ class Destiny:
 
         # Perform union if guardian already present.
         if self.user in self.guardians.keys():
-            old_mark = [g.strip() for g in gdns[user].split(",")]
+            old_mark = [g.strip() for g in gdns[self.user].split(",")]
             new_mark = list(set(old_mark) | set(new_mark))
 
         self.guardians[self.user] = ",".join(new_mark)
@@ -188,7 +220,7 @@ class Destiny:
     def clear_bookmarks(self) -> str:
         """Remove all a guardian's bookmarks"""
         print(f"  > Purging {self.user}'s bookmarks...")
-        self.guardians.pop(user, None)
+        self.guardians.pop(self.user, None)
         self.save_guardians()
 
         return f"@{self.user} Reminders cleared"
@@ -198,7 +230,7 @@ class Destiny:
         print(f"  > Displaying {self.user}'s bookmarks...")
         marks = self.guardians[self.user].split(",")
         msg = f"@{self.user} has bookmarked:"
-        
+
         for mark in marks:
             msg += f"\n> {mark}"
 
@@ -220,5 +252,5 @@ class Destiny:
         return "\n" + mentions
 
 
-d2 = Destiny("Jake", "d2 my marks")
+d2 = Destiny("Jake", "d2 news")
 print(d2.check())
