@@ -53,6 +53,9 @@ async def on_message(message):
 
     # Check for Destiny2 request
     d2 = Destiny(message.author, message.content)
+    if message.content.lower() == "d2 news":
+        # Quick response before parsing.
+        await message.channel.send("Checking...")
     if d2.check() != "":
         await message.channel.send(d2)
 
