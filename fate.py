@@ -9,7 +9,7 @@ class DiceRoll:
     """Wrapper for simulated dice roll"""
     def __init__(self, user: str, message: str):
         pattern = r"r[0-9]*d[0-9]+[\+\-]?[0-9]*[w,d]*"
-        
+
         self.user = user
         self.message = message.lower().replace(" ", "").replace("roll", "r")
         self.cmds = re.findall(pattern, self.message)
@@ -27,7 +27,7 @@ class DiceRoll:
 
     def decode(self, command: str) -> str:
         """Get dice command details"""
-        print("  > Decoding dice roll...")
+        print("  > Decoding dice command...")
         self.sides = int(re.findall(r"d[0-9]+", command)[0][1:])
 
         # Check for valid/multi-di roll.
@@ -48,7 +48,9 @@ class DiceRoll:
 
     def roll_dice(self) -> str:
         """Simulate specified dice roll"""
+        print("  > Let's roll!...")
         result = 0
+        
         msg = f"@{self.user}\n"
         msg += f"> *Rolling {self.di_count}"
         msg += f"d{self.sides}"
