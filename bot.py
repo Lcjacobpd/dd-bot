@@ -9,7 +9,7 @@ from reply import Reaction
 from reply import Echo
 from reply import memeSearch
 
-from destiny2 import todays_news
+from destiny2 import Destiny
 from destiny2 import new_reminder
 
 
@@ -21,7 +21,6 @@ client = discord.Client()
 Global
 '''
 ttt = TicTacToe()
-guardians: typing.Dict[str, str] = {}
 
 '''
 Listeners
@@ -52,9 +51,9 @@ async def on_message(message):
     if fate.message != '':
         await message.channel.send(fate.message)
 
-    # Check for Destiny 2 news call
-    d2 = todays_news(message.content)
-    if d2 != "":
+    # Check for Destiny2 request
+    d2 = Destiny(message.author, message.content)
+    if d2.check() != "":
         await message.channel.send(d2)
 
     # Check for Destiny reminder setup
