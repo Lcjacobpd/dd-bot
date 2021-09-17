@@ -10,7 +10,6 @@ from reply import Echo
 from reply import memeSearch
 
 from destiny2 import Destiny
-from destiny2 import new_reminder
 
 
 load_dotenv()

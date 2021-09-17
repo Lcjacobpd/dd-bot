@@ -172,6 +172,7 @@ class Destiny:
 
             return "\n" + ada
         else:
+            print("  > Vendor unavailable...")
             return ""  # Error case: page unreachable.
 
     def ask_spider(self, resp):
@@ -180,25 +181,61 @@ class Destiny:
         tagline = "Unlike his Fallen brethren, the clever Spider prefers to negotiate instead of fight."
 
         if resp.status_code == 200:
-            # Parse page for Ada's storefront.
+            # Parse page for Spider's storefront.
             soup = BeautifulSoup(resp.text, "html.parser")
             sales = soup.find("div", text=tagline).find_next("div", index=3)
             currency = sales.find_all_next("p", {"class": "tooltipCostName"})
             cost = sales.find_all_next("p", {"class": "tooltipCostQuantity"})
 
             spider = "\n> **Spider - Glimmer Trade**\n"
-            spider += f"> {cost[5].text} {currency[5].text}"
-            
+            spider += f"> {cost[5].text} {currency[5].text}\n"
+
             return "\n" + spider
         else:
+            print("  > Vendor unavailable...")
             return ""  # Error case: page unreachable.
-
 
     def ask_xur(self, resp):
         """Collect Xur location and Sales if present"""
-        print("  > Locating Xur... (TODO)\n")
+        print("  > Locating Xur...")
+        tagline = "A peddler of strange curios, Xûr's motives are not his own. He bows to his distant masters, the Nine."
+
+        if resp.status_code == 200:
+            # Parse page for Xur's storefront.
+            soup = BeautifulSoup(resp.text, "html.parser")
+            sales = soup.find("div", text=tagline)
+
+            # Xur may not be available.
+            try:
+                # Gather exotics and legendary weapons.
+                exotics = sales.find_next("div", index=0).find_all_next("p", {
+                    "class": "itemTooltip_itemName"})[2:10:2]
+                legends = sales.find_next("div", index=2).find_all_next("p", {
+                    "class": "itemTooltip_itemName"})[0:14:2]
+            except:
+                print("  > Vendor unavailable...")
+                return ""
+
+            xur = "\n> **Xur - Exotics**\n"
+            for ex in exotics:
+                desc = ex.find_next("p", {"class": "eventCardPerkDescription"}).text
+                xur += f"> {ex.text}: *{desc}*\n"
+
+            # Process legendary weapons & their mods.
+            xur += ">\n> ** Xur - Legendaries**\n"
+            for leg in legends:
+                perks = leg.find_all_next("div", {"class": "eventCardPerkItemContainer"})[1:3]
+                xur += f"> {leg.text}: *"
+                for perk in perks:
+                    xur += perk.text + " | "
+
+                xur = xur[:-3]
+                xur += "*\n"
+
+            return "\n" + xur
+
+        print("  > Vendor unavailable...")
         return ""
-        # TODO: impliment Xur
 
     def new_bookmarks(self) -> str:
         """Add new reminder to guardian"""
@@ -252,5 +289,8 @@ class Destiny:
         return "\n" + mentions
 
 
-d2 = Destiny("Jake", "d2 news")
-print(d2.check())
+# d2 = Destiny("Jake", "d2 news")
+# print(d2.check())
+# print()
+# d2 = Destiny("Yoder", "d2 my marks")
+# print(d2.check())
