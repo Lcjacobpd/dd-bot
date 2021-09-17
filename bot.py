@@ -46,8 +46,8 @@ async def on_message(message):
     print('Processing new message...')
 
     # Check for dice roll
-    fate = DiceRoll(message.author, message.content)
-    if fate.message != '':
+    roll = DiceRoll(message.author, message.content)
+    if roll.check() != "":
         await message.channel.send(fate.message)
 
     # Check for Destiny2 request
