@@ -8,9 +8,11 @@ from numpy import random
 class DiceRoll:
     """Wrapper for simulated dice roll"""
     def __init__(self, user: str, message: str):
+        pattern = r"r[0-9]*d[0-9]+[\+\-]?[0-9]*[w,d]*"
+        
         self.user = user
         self.message = message.lower().replace(" ", "").replace("roll", "r")
-        self.cmds = re.findall(r"r[0-9]*d[0-9]+[\+\-]?[0-9]*[w,d]*", self.message)
+        self.cmds = re.findall(pattern, self.message)
         self.di_count = 0
         self.sides = 0
         self.mod = 0
