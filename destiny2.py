@@ -222,7 +222,7 @@ class Destiny:
                 xur += f"> {ex.text}: *{desc}*\n"
 
             # Process legendary weapons & their mods.
-            xur += ">\n> ** Xur - Legendaries**\n"
+            xur += ">\n > ** Xur - Legendaries**\n"
             for leg in legends:
                 perks = leg.find_all_next("div", {"class": "eventCardPerkItemContainer"})[1:3]
                 xur += f"> {leg.text}: *"
@@ -245,27 +245,30 @@ class Destiny:
         new_mark = [m.strip() for m in msg.split(":")[1].split(",")]
 
         # Perform union if guardian already present.
-        if self.user in self.guardians.keys():
-            old_mark = [g.strip() for g in gdns[self.user].split(",")]
+        if str(self.user) in self.guardians.keys():
+            old_mark = [g.strip() for g in gdns[str(self.user)].split(",")]
             new_mark = list(set(old_mark) | set(new_mark))
 
-        self.guardians[self.user] = ",".join(new_mark)
+        self.guardians[str(self.user)] = ",".join(new_mark)
         self.save_guardians()
 
-        return f"> *{self.user}'s Reminders*\n> {self.guardians[self.user]}"
+        return f"> *{self.user}'s Reminders*\n> {self.guardians[str(self.user)]}"
 
     def clear_bookmarks(self) -> str:
         """Remove all a guardian's bookmarks"""
-        print(f"  > Purging {self.user}'s bookmarks...")
-        self.guardians.pop(self.user, None)
-        self.save_guardians()
+        if self.user in self.guardians.keys():
+            print(f"  > Purging {self.user}'s bookmarks...")
+            self.guardians.pop(str(self.user), None)
+            self.save_guardians()
 
-        return f"@{self.user} Reminders cleared"
+            return f"@{self.user}'s reminders cleared"
+        else:
+            return "Already done"
 
     def show_bookmarks(self) -> str:
         """Show a guardian's bookmarks"""
         print(f"  > Displaying {self.user}'s bookmarks...")
-        marks = self.guardians[self.user].split(",")
+        marks = self.guardians[str(self.user)].split(",")
         msg = f"@{self.user} has bookmarked:"
 
         for mark in marks:

@@ -47,15 +47,17 @@ async def on_message(message):
 
     # Check for dice roll
     roll = DiceRoll(message.author, message.content)
-    if roll.check() != "":
-        await message.channel.send(fate.message)
+    di =  roll.check()
+    if di != "":
+        await message.channel.send(di)
 
     # Check for Destiny2 request
-    d2 = Destiny(message.author, message.content)
+    destiny = Destiny(message.author, message.content)
     if message.content.lower() == "d2 news":
         # Quick response before parsing.
         await message.channel.send("Checking...")
-    if d2.check() != "":
+    d2 = destiny.check()
+    if  destiny != "":
         await message.channel.send(d2)
 
     # Check for meme reference
