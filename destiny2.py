@@ -11,8 +11,8 @@ from datetime import date
 
 class Destiny:
     """Wrapper for Destiny 2 interactions"""
-    def __init__(self, author: str, message: str):
-        self.user: str = author
+    def __init__(self, author, message: str):
+        self.user: str = f"{author}#{author.id}"
         self.message: str = message.lower().strip()
         self.guardians: typing.Dict[str, str] = {}
 
@@ -37,6 +37,10 @@ class Destiny:
         # Display active bookmarks.
         if msg.startswith("d2 my marks"):
             return self.show_bookmarks()
+
+        # Display command list/functions.
+        if msg.startswith("d2 help"):
+            return self.about_me()
 
         return ""  # Default/error case.
 
@@ -216,13 +220,13 @@ class Destiny:
                 print("  > Vendor unavailable...")
                 return ""
 
-            xur = "\n> **Xur - Exotics**\n"
+            xur = "> **Xur - Exotics**\n"
             for ex in exotics:
                 desc = ex.find_next("p", {"class": "eventCardPerkDescription"}).text
                 xur += f"> {ex.text}: *{desc}*\n"
 
             # Process legendary weapons & their mods.
-            xur += ">\n > ** Xur - Legendaries**\n"
+            xur += "> \n > ** Xur - Legendaries**\n"
             for leg in legends:
                 perks = leg.find_all_next("div", {"class": "eventCardPerkItemContainer"})[1:3]
                 xur += f"> {leg.text}: *"
@@ -261,23 +265,21 @@ class Destiny:
             self.guardians.pop(str(self.user), None)
             self.save_guardians()
 
-            return f"@{self.user}'s reminders cleared"
+            return f"{self.user}'s reminders cleared"
         else:
             return "Already done"
 
     def show_bookmarks(self) -> str:
         """Show a guardian's bookmarks"""
         print(f"  > Displaying {self.user}'s bookmarks...")
-        marks = self.guardians[str(self.user)].split(",")
-        msg = f"@{self.user} has bookmarked:"
 
-        for mark in marks:
-            msg += f"\n> {mark}"
-
-        return msg
+        if str(self.user) in self.guardians.keys():
+            return f"> *{self.user} has bookmarked*\n> {self.guardians[str(self.user)]}"
+        else:
+            return f"> No bookmarks found for {self.user}"
 
     def notify_who(self, news: str) -> str:
-        """ Search news for Guardian keywords"""
+        """Search news for Guardian keywords"""
         informees = []
         for name, marks in self.guardians.items():
             for mark in marks.split(","):
@@ -288,12 +290,16 @@ class Destiny:
         # Format @ mentions.
         mentions = ""
         for person in informees:
-            mentions += f"@{person} "
+            mentions += f"<@!{person.split('#')[2]}> "
         return "\n" + mentions
 
+    def about_me(self):
+        """Commmands list"""
+        about = "```D2 COMMANDS:\n"
+        about += "============\n"
+        about += "d2 news              -  Show current daily items\n"
+        about += "d2 bookmark: a, b..  -  Add new bookmark(s)\n"
+        about += "d2 my marks          -  Show my current bookmarks\n"
+        about += "d2 clear             -  Clear my bookmarks```"
 
-# d2 = Destiny("Jake", "d2 news")
-# print(d2.check())
-# print()
-# d2 = Destiny("Yoder", "d2 my marks")
-# print(d2.check())
+        return about

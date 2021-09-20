@@ -57,7 +57,7 @@ async def on_message(message):
         # Quick response before parsing.
         await message.channel.send("Checking...")
     d2 = destiny.check()
-    if  destiny != "":
+    if  d2 != "":
         await message.channel.send(d2)
 
     # Check for meme reference
