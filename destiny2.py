@@ -9,12 +9,58 @@ from bs4 import BeautifulSoup
 from datetime import date
 
 
+def group_one(match_obj):
+    """Return first group of match object"""
+    return match_obj.group(1)
+
+def inline_length(msg: str):
+    """Calculate in-line length"""
+    uppers = [
+        4, 2.6, 3.6, 3.6, 2.6, 2.6, 3.6, 3.6, 1, 2.6,
+        3, 2.6, 5.6, 3.6, 3.65, 3, 3.65, 3, 2.8, 3,
+        3.6, 3.4, 5.6, 3.3, 3, 3
+
+    ]
+    lowers = [
+        3, 2.6, 2.6, 3, 2.3, 1.6, 3, 2.6, 1.6, 1.6,
+        2.3, 1.6, 4.3, 2.6, 3, 2.6, 3, 1, 2.3, 1.6,
+        2.3, 3, 4.3, 2.3, 2.6, 2.6
+    ]
+
+    length = 0
+    for char in msg:
+        if char.isupper():
+            length += uppers[ord(char) - ord('A')]
+        elif char.islower():
+            length += lowers[ord(char) - ord('a')]
+        elif char == " ":
+            length += 2
+        else:
+            length += 1.5
+
+    return round(round(length) * .87)
+
+def format_inline(msgs: list):
+    """Format text for 'two-column' display"""
+    length = 0
+    for msg in msgs:
+        l = inline_length(msg)
+        length = l if l > length else length
+
+    formatted = ""
+    for msg in msgs:
+        formatted += msg + (" " * (length - inline_length(msg) +3)) + ":"
+
+    return formatted
+
+
 class Destiny:
     """Wrapper for Destiny 2 interactions"""
     def __init__(self, author, message: str):
         self.user: str = f"{author}#{author.id}"
+        self.name: str = author.name
         self.message: str = message.lower().strip()
-        self.guardians: typing.Dict[str, str] = {}
+        self.guardians: typing.Dict[str, list] = {}
 
         if self.message.startswith("d2"):
             self.fetch_guardians()
@@ -32,7 +78,9 @@ class Destiny:
 
         # Remove bookmarks case.
         if msg.startswith("d2 clear"):
-            return self.clear_bookmarks()
+            items = re.sub("d2 clear:*", "", msg).strip()
+            items = [i.strip() for i in items.split(",")] if len(items) > 0 else []
+            return self.clear_bookmarks(items)
 
         # Display active bookmarks.
         if msg.startswith("d2 my marks"):
@@ -46,13 +94,13 @@ class Destiny:
 
     def fetch_guardians(self) -> None:
         """Recall guardian bookmarks from file"""
-        try:  # File may not exist.
+        try:
             print("  > Fetching guardians...")
             with open("guardians.txt", "r") as in_file:
                 lines = in_file.readlines()
                 for line in lines:
                     name = line[:-1].split(":")[0]
-                    marks = line[:-1].split(":")[1]
+                    marks = line[:-1].split(":")[1].split(",")
                     self.guardians[name] = marks
         except:
             print("  > Lost to the dark corners of time!")
@@ -61,13 +109,23 @@ class Destiny:
         """Save guardian bookmarks to file"""
         with open("guardians.txt", "w") as out_file:
             for name, marks in self.guardians.items():
-                out_file.write(f"{name}:{marks}\n")
+                out_file.write(f"{name}:{','.join(marks)}\n")
 
     def todays_news(self) -> str:
         """Collect today"s news"""
         print("  > Guardians make their own fate!")
+        today = date.today()
+        format_date = f"{today.month}/{today.day}/{today.year}"
+        doth = today.strftime("%A")
 
-        news: str = self.lost_sectors()
+        news: str = self.lost_sectors(format_date)
+
+        # Check for Trials news if available.
+        if doth in ["Friday", "Saturday", "Sunday", "Monday"]:
+            news += self.trials()
+        else:
+            print("  > Skipping Trials...")
+
 
         # Fetch vendors page only once.
         url = "https://www.todayindestiny.com/vendors"
@@ -75,39 +133,52 @@ class Destiny:
 
         news += self.ask_ada(resp)
         news += self.ask_spider(resp)
-        news += self.ask_xur(resp)
+
+        # Grab Xur if weekend.
+        if doth in ["Friday", "Saturday", "Sunday"]:
+            news += self.ask_xur(resp)
+        else:
+            print("  > Skipping Xur")
 
         # Review news for bookmarks.
         news += self.notify_who(news)
 
         return news
 
-    def lost_sectors(self) -> str:
+    def lost_sectors(self, format_date) -> str:
         """Collect daily lost sectors"""
         print("  > Scouring lost sectors...")
 
         url = "https://kyberscorner.com/destiny2/lost-sectors/"
         resp = requests.get(url)
-        today = date.today()
-        format_date = f"{today.month}/{today.day}/{today.year}"
-
+        
         if resp.status_code == 200:
             # Find today's sectors.
             soup = BeautifulSoup(resp.text, "html.parser")
-            row = soup.find("td", text=format_date).parent
+            row = soup.find("td", text=format_date).parent.find_all_next("td")[0:7]
 
             # Format by tiers.
             msg = ""
             sectors = ["Legend", "Master"]
-            for cell in row:
+            cells_text = [c.text for c in row]
+
+            for n, cell in enumerate(cells_text):             
                 tier = ""
                 place = ""
-                if "(" in cell.text:
+
+                # Sector name
+                if n == 1 or n == 4:
                     tier = sectors.pop(0)
-                    place = cell.text.split("(")[0]
+                    place = re.sub(
+                        r"([A-Za-z 0-9]+)(\({0,1}[A-Z]{1}[a-z]+\){0,1})",
+                        group_one,
+                        cell
+                    ).strip()
                     msg += f"> **{tier} - {place}**\n"
-                if "," in cell.text:
-                    msg += f"> {cell.text.replace(',', ':', 1)}\n> \n"
+                
+                # Sector rewards
+                elif "," in cell:
+                    msg += f"> {cell.replace(',', ':', 1)}\n> \n"
 
                 # Try for additional details.
                 msg += self.sector_enemies(soup, place, tier)
@@ -129,7 +200,7 @@ class Destiny:
                         champ = list(note.parent.parent)
 
                 enemies = "> *"
-                patt = r"[A-Za-z]+: x[0-9]+"
+                patt = r"[A-Za-z:]+ x[0-9]+"
 
                 # Collect sector enemies by tier.
                 if tier == "Legend":
@@ -146,6 +217,25 @@ class Destiny:
             msg = "> *Champions unknown | Shields unknown*\n"
 
         return msg
+
+    def trials(self) -> str:
+        """Collect Trials of Osiris news"""
+        url = "https://kyberscorner.com/destiny2/trialsofosiris/"
+        resp = requests.get(url)
+        
+
+        if resp.status_code == 200:
+            # Find today's sectors.
+            soup = BeautifulSoup(resp.text, "html.parser")
+            trial = soup.find_all("strong", text="Map: ")[0].parent
+            map = " ".join(trial.text.split(" ")[1:]).strip()
+            reward = trial.find_all_next("strong")[1].find_next("a").text
+
+            osiris = "> **Trials of Osiris**\n"
+            osiris += f"> *{map}*\n"
+            osiris += f"> Flawless Reward: {reward}\n"
+
+        return "\n" + osiris
 
     def ask_ada(self, resp) -> str:
         """Collect daily Ada sales"""
@@ -227,14 +317,16 @@ class Destiny:
 
             # Process legendary weapons & their mods.
             xur += "> \n > ** Xur - Legendaries**\n"
+            items = []
+            tags = []
             for leg in legends:
                 perks = leg.find_all_next("div", {"class": "eventCardPerkItemContainer"})[1:3]
-                xur += f"> {leg.text}: *"
-                for perk in perks:
-                    xur += perk.text + " | "
+                items.append(leg.text) #
+                tags.append("*"+ perks[0].text +", "+ perks[1].text +"*")
 
-                xur = xur[:-3]
-                xur += "*\n"
+            lines = format_inline(items).split(":")[:-1]
+            for i, line in enumerate(lines):
+                xur += f"> {line}" + tags[i] + "\n"
 
             return "\n" + xur
 
@@ -250,39 +342,49 @@ class Destiny:
 
         # Perform union if guardian already present.
         if str(self.user) in self.guardians.keys():
-            old_mark = [g.strip() for g in gdns[str(self.user)].split(",")]
+            old_mark = gdns[str(self.user)]
             new_mark = list(set(old_mark) | set(new_mark))
 
-        self.guardians[str(self.user)] = ",".join(new_mark)
+        self.guardians[str(self.user)] = new_mark
         self.save_guardians()
 
-        return f"> *{self.user}'s Reminders*\n> {self.guardians[str(self.user)]}"
+        #user = self.user.split('#')[0]
+        return self.show_bookmarks() #f"> *{user}'s bookmarks:*\n> {self.guardians[str(self.user)]}"
 
-    def clear_bookmarks(self) -> str:
-        """Remove all a guardian's bookmarks"""
+    def clear_bookmarks(self, items:list = []) -> str:
+        """Remove all/select guardian's bookmarks"""
         if self.user in self.guardians.keys():
-            print(f"  > Purging {self.user}'s bookmarks...")
+            if items != []:
+                for i in items:
+                    if i in self.guardians[str(self.user)]:
+                        self.guardians[str(self.user)].remove(i)
+
+                self.save_guardians()
+                return self.show_bookmarks()
+
+            #else
+            print(f"  > Purging {self.name}'s bookmarks...")
             self.guardians.pop(str(self.user), None)
             self.save_guardians()
-
-            return f"{self.user}'s reminders cleared"
+            return f"{self.name}'s reminders cleared"
         else:
             return "Already done"
 
     def show_bookmarks(self) -> str:
         """Show a guardian's bookmarks"""
-        print(f"  > Displaying {self.user}'s bookmarks...")
+        print(f"  > Displaying {self.name}'s bookmarks...")
 
-        if str(self.user) in self.guardians.keys():
-            return f"> *{self.user} has bookmarked*\n> {self.guardians[str(self.user)]}"
+        if str(self.user) in self.guardians.keys():            
+            items = self.guardians[str(self.user)]
+            return f"> *{self.name}'s bookmarks:*\n> {', '.join(items)}"
         else:
-            return f"> No bookmarks found for {self.user}"
+            return f"> No bookmarks found for {self.name}"
 
     def notify_who(self, news: str) -> str:
         """Search news for Guardian keywords"""
         informees = []
         for name, marks in self.guardians.items():
-            for mark in marks.split(","):
+            for mark in marks:
                 if mark.strip().lower() in news.lower():
                     informees.append(name)
                     break
@@ -295,11 +397,12 @@ class Destiny:
 
     def about_me(self):
         """Commmands list"""
-        about = "```D2 COMMANDS:\n"
-        about += "============\n"
-        about += "d2 news              -  Show current daily items\n"
-        about += "d2 bookmark: a, b..  -  Add new bookmark(s)\n"
-        about += "d2 my marks          -  Show my current bookmarks\n"
-        about += "d2 clear             -  Clear my bookmarks```"
+        about  = "> ```D2 COMMANDS:\n"
+        about += "> ============\n"
+        about += "> d2 news              -  Show current daily items\n"
+        about += "> d2 bookmark: a, b..  -  Add new bookmark(s)\n"
+        about += "> d2 my marks          -  Show my current bookmarks\n"
+        about += "> d2 clear             -  Clear all bookmarks\n"
+        about += "> d2 clear: a, b..     -  Clear specific bookmarks```"
 
         return about
