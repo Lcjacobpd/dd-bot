@@ -9,6 +9,28 @@ from bs4 import BeautifulSoup
 from datetime import date
 
 
+#region Emojis
+
+lost_sector = '<:d2_lsec:908482349916909628>'
+ada_icon    = '<:d2_ada:908482465360924753>'
+xur_icon    = '<:d2_xur:908482481353810001>'
+trials_icon = '<:d2_osi:908482512387448862>'
+spider_icon = '<:d2_spi:908482383546822686>'
+
+unstoppable = '<:d2_ust:908456357076799538>'
+barrier     = '<:d2_bar:908455916234502245>'
+overload    = '<:d2_ovl:908456149702029313>'
+
+solar = '<:d2_solar:908458507735547954>'
+void  = '<:d2_void:908458519550898197>'
+arc   = '<:d2_arc:908458495983091743>'
+
+clr = '<:clear:920007120513024030>'
+
+#endregion
+
+#region Utilities
+
 def group_one(match_obj):
     """Return first group of match object"""
     return match_obj.group(1)
@@ -53,6 +75,8 @@ def format_inline(msgs: list):
 
     return formatted
 
+#endregion
+
 
 class Destiny:
     """Wrapper for Destiny 2 interactions"""
@@ -92,6 +116,8 @@ class Destiny:
 
         return ""  # Default/error case.
 
+    #region GuardianOperations
+
     def fetch_guardians(self) -> None:
         """Recall guardian bookmarks from file"""
         try:
@@ -111,6 +137,8 @@ class Destiny:
             for name, marks in self.guardians.items():
                 out_file.write(f"{name}:{','.join(marks)}\n")
 
+    #endregion
+
     def todays_news(self) -> str:
         """Collect today"s news"""
         print("  > Guardians make their own fate!")
@@ -118,32 +146,36 @@ class Destiny:
         format_date = f"{today.month}/{today.day}/{today.year}"
         doth = today.strftime("%A")
 
-        news: str = self.lost_sectors(format_date)
+        events = self.lost_sectors(format_date)
 
         # Check for Trials news if available.
         if doth in ["Friday", "Saturday", "Sunday", "Monday"]:
-            news += self.trials()
+            events += self.trials()
         else:
             print("  > Skipping Trials...")
-
 
         # Fetch vendors page only once.
         url = "https://www.todayindestiny.com/vendors"
         resp = requests.get(url)
 
-        news += self.ask_ada(resp)
-        news += self.ask_spider(resp)
+        vendors  = self.ask_ada(resp)
+        vendors += self.ask_spider(resp)
 
         # Grab Xur if weekend.
-        if doth in ["Friday", "Saturday", "Sunday"]:
-            news += self.ask_xur(resp)
+        if doth in ["Friday", "Saturday", "Sunday", "Monday"]:
+            vendors += self.ask_xur(resp)
         else:
-            print("  > Skipping Xur")
+            print("  > Skipping Xur...")
+        
 
         # Review news for bookmarks.
-        news += self.notify_who(news)
+        events  += self.notify_who(events)
+        vendors += self.notify_who(vendors)
+        foundVendors = len(vendors) > 5
 
-        return news
+        return f"{events}{clr}???{vendors}" if foundVendors else f"{events}"
+
+    #region LostSectors
 
     def lost_sectors(self, format_date) -> str:
         """Collect daily lost sectors"""
@@ -174,7 +206,7 @@ class Destiny:
                         group_one,
                         cell
                     ).strip()
-                    msg += f"> **{tier} - {place}**\n"
+                    msg += f"> {lost_sector} **{tier} - {place}**\n"
                 
                 # Sector rewards
                 elif "," in cell:
@@ -204,12 +236,21 @@ class Destiny:
 
                 # Collect sector enemies by tier.
                 if tier == "Legend":
-                    enemies += " ".join(re.findall(patt, champ[1].text))+" | "
-                    enemies += " ".join(re.findall(patt, champ[2].text))+"*\n"
+                    enemies += "   ".join(re.findall(patt, champ[1].text))+"   "
+                    enemies += "   ".join(re.findall(patt, champ[2].text))+"*\n"
 
                 elif tier == "Master":
-                    enemies += " ".join(re.findall(patt, champ[3].text))+" | "
-                    enemies += " ".join(re.findall(patt, champ[4].text))+"*\n"
+                    enemies += "   ".join(re.findall(patt, champ[3].text))+"   "
+                    enemies += "   ".join(re.findall(patt, champ[4].text))+"*\n"
+
+                enemies = enemies.lower()
+                enemies = re.sub(r"unstoppable:? ", unstoppable, enemies)
+                enemies = re.sub(r"barrier:? ", barrier, enemies)
+                enemies = re.sub(r"overload:? ", overload, enemies)
+
+                enemies = re.sub(r"solar:? ", solar, enemies)
+                enemies = re.sub(r"arc:? ", arc, enemies)
+                enemies = re.sub(r"void:? ", void, enemies)
 
                 msg += enemies
         except:
@@ -218,12 +259,15 @@ class Destiny:
 
         return msg
 
+    #endregion
+
+    #region Trials
+
     def trials(self) -> str:
         """Collect Trials of Osiris news"""
         url = "https://kyberscorner.com/destiny2/trialsofosiris/"
         resp = requests.get(url)
         
-
         if resp.status_code == 200:
             # Find today's sectors.
             soup = BeautifulSoup(resp.text, "html.parser")
@@ -231,11 +275,15 @@ class Destiny:
             map = " ".join(trial.text.split(" ")[1:]).strip()
             reward = trial.find_all_next("strong")[1].find_next("a").text
 
-            osiris = "> **Trials of Osiris**\n"
+            osiris = f"> {trials_icon} **Trials of Osiris**\n"
             osiris += f"> *{map}*\n"
             osiris += f"> Flawless Reward: {reward}\n"
 
+            if map == "…": map = ""
+
         return "\n" + osiris
+
+    #endregion
 
     def ask_ada(self, resp) -> str:
         """Collect daily Ada sales"""
@@ -245,7 +293,7 @@ class Destiny:
         if resp.status_code == 200:
             # Parse page for Ada's storefront.
             soup = BeautifulSoup(resp.text, "html.parser")
-            sales = soup.find("div", text=tagline).find_next("div", index=1)
+            sales = soup.find("div", text=tagline).find_next("div", index=2)
             labels = sales.find_all_next("p", {"class": "modPerkLabel"})
             flavors = sales.find_all_next("p", {
                 "class": "eventCardPerkDescription"})
@@ -259,9 +307,9 @@ class Destiny:
             for flavor in flavors:
                 desc.append(flavor.text)
 
-            ada = f"> **Ada-1 - {item[0]}**\n"
+            ada = f"> {ada_icon} **Ada-1 - {item[0]}**\n"
             ada += f"> {desc[0]}\n> \n"
-            ada += f"> **Ada-1 - {item[2]}**\n"
+            ada += f"> {ada_icon} **Ada-1 - {item[2]}**\n"
             ada += f"> {desc[2]}"
 
             return "\n" + ada
@@ -277,11 +325,11 @@ class Destiny:
         if resp.status_code == 200:
             # Parse page for Spider's storefront.
             soup = BeautifulSoup(resp.text, "html.parser")
-            sales = soup.find("div", text=tagline).find_next("div", index=3)
+            sales = soup.find("div", text=tagline).find_next("div", index=4)
             currency = sales.find_all_next("p", {"class": "tooltipCostName"})
             cost = sales.find_all_next("p", {"class": "tooltipCostQuantity"})
 
-            spider = "\n> **Spider - Glimmer Trade**\n"
+            spider = f"\n> {spider_icon} **Spider - Glimmer Trade**\n"
             spider += f"> {cost[5].text} {currency[5].text}\n"
 
             return "\n" + spider
@@ -297,10 +345,14 @@ class Destiny:
         if resp.status_code == 200:
             # Parse page for Xur's storefront.
             soup = BeautifulSoup(resp.text, "html.parser")
-            sales = soup.find("div", text=tagline)
+            sales = soup.find("p", text="Xûr")
 
             # Xur may not be available.
             try:
+                # Fetch location
+                location = sales.findNext("div", {"class": "eventCardDescription"}).text
+                location = re.findall(r"Location:?[ ]+(.+)", location, re.IGNORECASE)[0]
+
                 # Gather exotics and legendary weapons.
                 exotics = sales.find_next("div", index=0).find_all_next("p", {
                     "class": "itemTooltip_itemName"})[2:10:2]
@@ -310,13 +362,13 @@ class Destiny:
                 print("  > Vendor unavailable...")
                 return ""
 
-            xur = "> **Xur - Exotics**\n"
+            xur = f"> {xur_icon} **Xur - Exotics ({location})**\n"
             for ex in exotics:
                 desc = ex.find_next("p", {"class": "eventCardPerkDescription"}).text
                 xur += f"> {ex.text}: *{desc}*\n"
 
             # Process legendary weapons & their mods.
-            xur += "> \n > ** Xur - Legendaries**\n"
+            xur += f"> \n > {xur_icon} ** Xur - Legendaries ({location})**\n"
             items = []
             tags = []
             for leg in legends:
@@ -332,6 +384,8 @@ class Destiny:
 
         print("  > Vendor unavailable...")
         return ""
+
+    #region BookmarkCommands
 
     def new_bookmarks(self) -> str:
         """Add new reminder to guardian"""
@@ -390,19 +444,21 @@ class Destiny:
                     break
 
         # Format @ mentions.
-        mentions = ""
+        mentions = "\n"
         for person in informees:
             mentions += f"<@!{person.split('#')[2]}> "
-        return "\n" + mentions
+        return mentions
 
     def about_me(self):
         """Commmands list"""
-        about  = "> ```D2 COMMANDS:\n"
-        about += "> ============\n"
-        about += "> d2 news              -  Show current daily items\n"
-        about += "> d2 bookmark: a, b..  -  Add new bookmark(s)\n"
-        about += "> d2 my marks          -  Show my current bookmarks\n"
-        about += "> d2 clear             -  Clear all bookmarks\n"
-        about += "> d2 clear: a, b..     -  Clear specific bookmarks```"
+        about  = "```\nD2 COMMANDS:\n"
+        about += "============\n"
+        about += "d2 news             -  Show daily news    \n"
+        about += "d2 bookmark: a, b.. -  Add new bookmark(s)\n"
+        about += "d2 my marks         -  Show all bookmarks \n"
+        about += "d2 clear            -  Clear all bookmarks\n"
+        about += "d2 clear: a, b..    -  Clear mark(s)      \n```"
 
         return about
+
+    #endregion
