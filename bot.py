@@ -1,3 +1,4 @@
+from dis import dis
 import os
 import typing
 import discord
@@ -9,7 +10,7 @@ from reply import Reaction
 from reply import Echo
 from reply import memeSearch
 
-from destiny2 import Destiny
+from doot import Doot, ResponseCodes
 
 
 load_dotenv()
@@ -52,14 +53,14 @@ async def on_message(message):
         await message.channel.send(di)
 
     # Check for Destiny2 request
-    destiny = Destiny(message.author, message.content)
+    destiny = Doot(message.author, message.content)
     if message.content.lower() == "d2 news":
-        # Quick response before parsing.
         await message.channel.send("Checking...")
-    d2 = destiny.check() 
-    if  d2 != "":
-        for msg in d2.split("???"):
-            await message.channel.send(msg)
+    d2 = destiny.Check()
+    if  d2.ResponseCode == ResponseCodes.success:
+        for block in range(d2.BlockCount):
+            msg = d2.Message
+            await message.channel.send(msg.split("???")[block])
 
     # Check for meme reference
     meme = memeSearch(message)
@@ -70,12 +71,31 @@ async def on_message(message):
     if message.channel == discord.utils.get(message.guild.text_channels, name='echo'):
         echo = Echo()
         echo.puppet(message.content)
-        channel = discord.utils.get(message.guild.text_channels, name=echo.room)
-        if channel != None:
-            print(' > Echoing!')
-            await channel.send(echo.text)
+
+        # Get alternat guild if specified
+        if echo.guild != "":
+            Guild = None
+            for g in client.guilds:
+                if g.name == echo.guild:
+                    Guild = g
+
+            if Guild != None:
+                channel = discord.utils.get(Guild.text_channels, name=echo.room)
+                if channel != None:
+                    print('  > Echoing!')
+                    await channel.send(echo.text)
+                else:
+                    print('  > Channel not found!')
+                    pass
+            else: print('  > Guild not found!')
         else:
-            pass
+            channel = discord.utils.get(message.guild.text_channels, name=echo.room)
+            if channel != None:
+                print('  > Echoing!')
+                await channel.send(echo.text)
+            else:
+                print('  > Channel not found!')
+                pass
 
     if message.content.startswith('ttt'):
         ttt.build(message)

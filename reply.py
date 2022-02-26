@@ -1,4 +1,5 @@
 import re
+import string
 
 from discord import channel
 
@@ -50,5 +51,12 @@ class Echo:
         self.text = ''
 
     def puppet(self, message) -> None:
-        self.room = message.split(' ')[0]
+        self.room = message.split(' ')[0] 
         self.text = ' '.join(message.split(' ')[1:])
+
+        if not "#" in self.room:
+            self.guild = ""
+            return
+        else:
+            self.guild = self.room.split("#")[0]
+            self.room  = self.room.split("#")[1]
