@@ -8,7 +8,7 @@ from numpy import random
 class DiceRoll:
     """Wrapper for simulated dice roll"""
     def __init__(self, user: str, message: str):
-        pattern = r"r[1-9]*d[1-9]{1}[\d]*[\+\-]?[1-9]*[\d]*[wad]{0,2}"
+        pattern = r"r[0-9]*d[1-9]{1}[\d]*[\+\-]?[1-9]*[\d]*[wad]{0,2}"
 
         self.user = user
         self.message = message.lower().replace(r" ", "").replace("roll", "r")
@@ -40,8 +40,14 @@ class DiceRoll:
             self.sides = int(re.findall(r"d[1-9]{1}[0-9]*", command)[0][1:])
 
             # Check for multi-di roll
-            dc = re.findall(r"r[1-9]*d", command)
-            self.di_count = 1 if len(dc) == 1 else int(dc[0][:-1])
+            dc = re.findall(r"[0-9]+d", command)
+            if len(dc) == 0:
+                # None specified, default to 1
+                self.di_count = 1
+            else:
+                # Correct 0 -> 1, or use specified
+                dc = int(dc[0][:-1])
+                self.di_count = 1 if dc < 1 else dc          
 
             # Check for modifier
             if "+" in command or "-" in command:
@@ -110,8 +116,7 @@ class DiceRoll:
         # In either case, apply final modifier
         result += self.mod
         if self.mod == 0:
-            msg += f" = {result}" if self.di_count > 1 else ""
-            return msg
+            msg += f" = {result}" if self.di_count > 1 or self.adv or self.disadv else ""
         elif self.mod > 0:
             msg += f" + {self.mod} = {result}"
         else:
