@@ -14,7 +14,7 @@ Optional:
 - A number modifier preceeded by either +/-
 - The letters 'ad' or 'wd' denoting special roll type
 """
-PATTERN = r"r(?:[1-9]*\d)?d[1-9]\d*(?:[\+\-][1-9][\d]*)?(?:ad|wd)?"
+PATTERN = r"r(?:[1-9]*\d*)?d[1-9]\d*(?:[\+\-][1-9][\d]*)?(?:ad|wd)?"
 
 
 class RollType(Enum):
