@@ -1,129 +1,131 @@
-"""
-Process dice roll commands
-"""
 import re
+from enum import Enum
 from numpy import random
 
 
-class DiceRoll:
-    """Wrapper for simulated dice roll"""
-    def __init__(self, user: str, message: str):
-        pattern = r"r[0-9]*d[1-9]{1}[\d]*[\+\-]?[1-9]*[\d]*[wad]{0,2}"
+"""
+GLOBAL DICE COMMAND RECOGNITION PATTERN
+Base:
+- The letter 'r' followed by
+- An optional number > 0,
+- The letter 'd' followed by
+- A required number > 0
+Optional:
+- A number modifier preceeded by either +/-
+- The letters 'ad' or 'wd' denoting special roll type
+"""
+PATTERN = r"r(?:[1-9]*\d)?d[1-9]\d*(?:[\+\-][1-9][\d]*)?(?:ad|wd)?"
 
-        self.user = user
-        self.message = message.lower().replace(r" ", "").replace("roll", "r")
-        self.cmds = re.findall(pattern, self.message)
-        self.di_count = 0
-        self.sides = 0
-        self.mod = 0
-        self.disadv = False
-        self.adv = False
 
-    def check(self) -> str:
-        """Return dice results"""
-        if len(self.cmds) > 0:
-            return self.decode(self.cmds)
-        else:
+class RollType(Enum):
+    Normal = 1
+    Advantage = 2
+    Disadvantage = 3
+
+
+class DiceCommand:
+    def __init__(self, rawCommand: str):        
+        diCount   = re.findall(r"r([1-9]\d*)d", rawCommand)
+        sideCount = re.findall(r"d([1-9]\d*)", rawCommand)
+        modifier  = re.findall(r"[/+/-][1-9]\d*", rawCommand)
+        rollType  = re.findall(r"(ad|wd)", rawCommand)
+
+        # Record parameters or assign default
+        self.DiCount   = 1 if len(diCount) == 0 else int(diCount[0])
+        self.SideCount = 4 if len(sideCount) == 0 else int(sideCount[0])
+        self.Modifier  = 0 if len(modifier) == 0 else int(modifier[0])
+        self.Type = RollType.Normal if len(rollType) == 0 or self.DiCount > 1 else RollType.Advantage if rollType[0] == "ad" else RollType.Disadvantage
+
+
+"""
+DICE ROLLER
+- Determine if message contains dice command(s)
+- Parse command(s) for details
+- Generate psuedo random number(s)
+- Return results formatted for display
+"""
+class DiceRoller:
+    def __init__(self, author: str, message: str):
+        self.Author = author
+        self.Message = message.lower().replace(r" ", "").replace("roll", "r")
+        self.Commands = re.findall(PATTERN, self.Message)
+
+    def Check(self) -> str:
+        # No dice roll commands recognized, bail early
+        if len(self.Commands) == 0:
             return ""
 
-    def decode(self, commands) -> str:
-        """Get dice commands details"""
-        print("  > Decoding dice commands... \t" + str(self.cmds))
+        # Otherwise, let's roll!
+        print("  > Decoding dice commands... \t" + str(self.Commands))
+        response = f"@{self.Author}\n"
+        for rawCommand in self.Commands:
+            response += self.Roll(DiceCommand(rawCommand))
 
-        msg = ""
-        for command in commands:
-            # Reset between rolls
-            self.mod = 0
-            self.disadv = False
-            self.adv = False
+        return response
 
-            self.sides = int(re.findall(r"d[1-9]{1}[0-9]*", command)[0][1:])
-
-            # Check for multi-di roll
-            dc = re.findall(r"[0-9]+d", command)
-            if len(dc) == 0:
-                # None specified, default to 1
-                self.di_count = 1
-            else:
-                # Correct 0 -> 1, or use specified
-                dc = int(dc[0][:-1])
-                self.di_count = 1 if dc < 1 else dc          
-
-            # Check for modifier
-            if "+" in command or "-" in command:
-                m = re.findall(r"[\+\-][1-9]*[0-9]*", command)
-                self.mod = int(m[0]) if len(m) > 0 else 0
-
-            # Roll with disadvantage
-            if "wd" in command and self.di_count == 1:
-                self.disadv = True
-
-            # Roll with advantage
-            elif "ad" in command and self.di_count == 1:
-                self.adv = True
-
-            # Roll
-            msg += "\n" + self.roll_dice()
-        return msg
-
-    def roll_dice(self) -> str:
+    def Roll(self, command: "DiceCommand") -> str:
         """Simulate specified dice roll"""
         print("  > Let's roll!...")
-        result = 0
-        
-        msg = f"@{self.user}\n"
-        msg += f"> *Rolling {self.di_count}"
-        msg += f"d{self.sides}"
-        msg += f"{'+' if self.mod > 0 else ''}{self.mod}" if self.mod != 0 else ""
-        msg += " with disadvantage" if self.disadv else ""
-        msg += " with advantage" if self.adv else ""
-        msg += "...*\n"
+        rollTotal = 0
 
-        # Roll with disadvantage (display both)
-        if self.disadv:
-            r_one = random.randint(1, self.sides + 1)
-            r_two = random.randint(1, self.sides + 1)
-            if r_one < r_two:
-                msg += f"> (**{r_one}** < {r_two})"
-                result = r_one
-
-            else:
-                msg += f"> (**{r_two}** < {r_one})"
-                result = r_two
+        # Begin building formatted response message        
+        response = f"> *Rolling {command.DiCount}d{command.SideCount}"
+        response += "{0:+}".format(command.Modifier) if command.Modifier != 0     else ""
+        response += " with advantage"    if command.Type == RollType.Advantage    else ""
+        response += " with disadvantage" if command.Type == RollType.Disadvantage else ""
+        response += "...*\n"
 
         # Roll with advantage (display both)
-        elif self.adv:
-            r_one = random.randint(1, self.sides + 1)
-            r_two = random.randint(1, self.sides + 1)
-            if r_one > r_two:
-                msg += f"> (**{r_one}** > {r_two})"
-                result = r_one
+        if command.Type == RollType.Advantage:
+            firstRoll  = random.randint(1, command.SideCount + 1)
+            secondRoll = random.randint(1, command.SideCount + 1)
+            if firstRoll > secondRoll:
+                response += f"> (**{firstRoll}** > {secondRoll})"
+                rollTotal = firstRoll
 
             else:
-                msg += f"> (**{r_two}** > {r_one})"
-                result = r_two
+                response += f"> (**{secondRoll}** > {firstRoll})"
+                rollTotal = secondRoll
 
-        # Generic case, roll values are cumulative
+        # Roll with disadvantage (display both)
+        elif command.Type == RollType.Disadvantage:
+            firstRoll  = random.randint(1, command.SideCount + 1)
+            secondRoll = random.randint(1, command.SideCount + 1)
+            if firstRoll < secondRoll:
+                response += f"> (**{firstRoll}** < {secondRoll})"
+                rollTotal = firstRoll
+
+            else:
+                response += f"> (**{secondRoll}** < {firstRoll})"
+                rollTotal = secondRoll
+
+        # Normal roll, values are cumulative
         else:
-            msg += "> "
-            for _ in range(1, self.di_count + 1):
-                roll = random.randint(1, self.sides + 1)
-                msg += f"{roll} + "
-                result += roll
+            response += "> "
+            for _ in range(1, command.DiCount + 1):
+                roll = random.randint(1, command.SideCount + 1)
+                response += f"{roll} + "
+                rollTotal += roll
+            # Trim the trailing ' + ' off the end
+            response = response[:-3]
 
-            msg = msg[:-3]
+        # In all cases, apply final modifier
+        rollTotal += command.Modifier
 
-        # In either case, apply final modifier
-        result += self.mod
-        if self.mod == 0:
-            msg += f" = {result}" if self.di_count > 1 or self.adv or self.disadv else ""
-        elif self.mod > 0:
-            msg += f" + {self.mod} = {result}"
+        # Display total value if needed
+        # - Roll used several dice
+        # - Roll used advantage/disadvantage
+        # - Roll had a non-zero modifier
+        if command.Modifier == 0:
+            response += f" = {rollTotal}" if command.DiCount > 1 or command.Type != RollType.Normal else ""
+        elif command.Modifier > 0:
+            response += f" + {command.Modifier} = {rollTotal}"
         else:
-            msg += f" - {abs(self.mod)} = {result}"
+            response += f" - {abs(command.Modifier)} = {rollTotal}"
 
-        return msg
+        return response+"\n"
 
 
-# r = DiceRoll("jake", "Grenade: rd8+1 Attack:rd20+4wd")
-# print(r.check())
+# DEBUG values
+# r = DiceRoller("jake", "r4d4 rd20+4wd rd10ad rd8+")
+# print(r.Check())

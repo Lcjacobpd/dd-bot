@@ -4,7 +4,8 @@ import typing
 import discord
 from dotenv import load_dotenv
 
-from fate import DiceRoll
+from fate import DiceRoller
+from inventory import Inventory
 from reply import memeSearch
 from reply import Reaction
 
@@ -29,7 +30,7 @@ async def on_message(message):
             await message.add_reaction('🇫')
             await message.add_reaction(Reaction.nat1) 
 
-        # React if it was a bad dice roll
+        # React if it was a good dice roll
         if 'Rolling 1d20...' in message.content and message.content.endswith('> 20'):
             await message.add_reaction(Reaction.nat20)
 
@@ -38,8 +39,8 @@ async def on_message(message):
     print('Processing new message...')
 
     # Check for dice roll
-    roll = DiceRoll(message.author, message.content)
-    di =  roll.check()
+    roll = DiceRoller(message.author, message.content)
+    di =  roll.Check()
     if di != "":
         await message.channel.send(di)
 
@@ -47,6 +48,11 @@ async def on_message(message):
     meme = memeSearch(message)
     if meme is not None:
         await message.channel.send(meme)
+
+    inv = Inventory(message.author, message.content)
+    i = inv.check()
+    if i != "":
+        await message.channel.send(i)
 
     print ('  > Done.')
 
