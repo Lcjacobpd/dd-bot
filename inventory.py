@@ -135,10 +135,8 @@ class InventoryHandler:
         if self.Author not in list(self.Data.keys()) or command.ItemKey not in list(self.Data[self.Author]):
             return self.InformEmpty()
 
-        # if self.Author in list(self.Data.keys()) and command.ItemKey in list(self.Data[self.Author]):
-        # if command.ItemKey in self.Data[self.Author]:
         print(F"  > Subtracting {command.ItemKey} for {self.Author}...")
-
+        
         # Negative balance check, inform user and bail early
         if self.Data[self.Author][command.ItemKey] - int(command.Quantity) < 0:
             print("  > Negative balance detected...")
