@@ -5,9 +5,9 @@ import discord
 from dotenv import load_dotenv
 
 from fate import DiceRoller
-from inventory import Inventory
-from reply import memeSearch
-from reply import Reaction
+from inventory import InventoryHandler
+from reaction import MemeReference
+from reaction import CustomEmoji
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -28,11 +28,11 @@ async def on_message(message):
         # React if it was a bad dice roll
         if 'Rolling 1d20...' in message.content and message.content.endswith('> 1'):
             await message.add_reaction('🇫')
-            await message.add_reaction(Reaction.nat1) 
+            await message.add_reaction(CustomEmoji.Nat1) 
 
         # React if it was a good dice roll
         if 'Rolling 1d20...' in message.content and message.content.endswith('> 20'):
-            await message.add_reaction(Reaction.nat20)
+            await message.add_reaction(CustomEmoji.Nat20)
 
         return
 
@@ -40,19 +40,18 @@ async def on_message(message):
 
     # Check for dice roll
     roll = DiceRoller(message.author, message.content)
-    di =  roll.Check()
-    if di != "":
-        await message.channel.send(di)
+    if roll.Response is not None:
+        await message.channel.send(roll.Response)
 
     # Check for meme reference
-    meme = memeSearch(message)
-    if meme is not None:
-        await message.channel.send(meme)
+    meme = MemeReference(message.author, message.content)
+    if meme.Response is not None:
+        await message.channel.send(meme.Response)
 
-    inv = Inventory(message.author, message.content)
-    i = inv.check()
-    if i != "":
-        await message.channel.send(i)
+    # Check for inventory request
+    inventory = InventoryHandler(message.author, message.content)
+    if inventory.Response is not None:
+        await message.channel.send(inventory.Response)
 
     print ('  > Done.')
 

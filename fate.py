@@ -49,11 +49,12 @@ class DiceRoller:
         self.Author = author
         self.Message = message.lower().replace(r" ", "").replace("roll", "r")
         self.Commands = re.findall(PATTERN, self.Message)
+        self.Response = self.Check()
 
     def Check(self) -> str:
         # No dice roll commands recognized, bail early
         if len(self.Commands) == 0:
-            return ""
+            return None
 
         # Otherwise, let's roll!
         print("  > Decoding dice commands... \t" + str(self.Commands))
@@ -126,6 +127,6 @@ class DiceRoller:
         return response+"\n"
 
 
-# DEBUG values
+# DEBUG
 # r = DiceRoller("jake", "r4d4 rd20+4wd rd10ad rd8+")
-# print(r.Check())
+# print(r.Response)
