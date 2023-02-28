@@ -136,7 +136,7 @@ class InventoryHandler:
             return self.InformEmpty()
 
         print(F"  > Subtracting {command.ItemKey} for {self.Author}...")
-        
+
         # Negative balance check, inform user and bail early
         if self.Data[self.Author][command.ItemKey] - int(command.Quantity) < 0:
             print("  > Negative balance detected...")

@@ -35,9 +35,10 @@ class MemeReference():
         library = {
             # Prompt            : Response
             "hellothere"        : "General Kenobi! You *are* a bold one.",
+            "iamthesenate"      : "Not yet.",
+            "rockandstone"      : "For Karl!",
             "whatelsedoesitdo"  : "Your mom.",
             "whatelsecanitdo"   : "Your mom.",
-            "rockandstone"      : "For Karl!",
             "thisbotsucks"      : "No u.",
             "goodjobson"        : CustomEmoji.Heyo,
             "thatsmyboy"        : CustomEmoji.Heyo,
