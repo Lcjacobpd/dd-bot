@@ -98,6 +98,11 @@ class InventoryHandler:
         receipt += F"{self.Data[self.Author][command.ItemKey]} {command.ItemKey}"
         return receipt
     
+    def WriteToFile(self):
+        jsonFile = open("data.json", "w")
+        jsonFile.write(json.dumps(self.Data))
+        jsonFile.close()
+    
     def ListInventory(self):
         # No inventory found, bail early
         if self.Author not in list(self.Data.keys()):
@@ -121,11 +126,7 @@ class InventoryHandler:
         print(F"  > Adding {command.ItemKey} for {self.Author}...")
         self.Data[self.Author][command.ItemKey] += int(command.Quantity)
         response = self.GenerateReceipt(command)
-        
-        # Write back to file
-        jsonFile = open("data.json", "w")
-        jsonFile.write(json.dumps(self.Data))
-        jsonFile.close()
+        self.WriteToFile()
 
         return response
 
@@ -148,12 +149,8 @@ class InventoryHandler:
             return response
 
         self.Data[self.Author][command.ItemKey] -= int(command.Quantity)
-        response = self.GenerateReceipt(command)
-        
-        # Write back to file
-        jsonFile = open("data.json", "w")
-        jsonFile.write(json.dumps(self.Data))
-        jsonFile.close()
+        response = self.GenerateReceipt(command)        
+        self.WriteToFile()
 
         return response
     
