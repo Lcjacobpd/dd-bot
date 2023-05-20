@@ -42,6 +42,7 @@ class MemeReference():
             "thisbotsucks"      : "No u.",
             "goodjobson"        : CustomEmoji.Heyo,
             "thatsmyboy"        : CustomEmoji.Heyo,
+            "gogetemson"        : CustomEmoji.Heyo,
             "ttyl"              : "G\'night"
         }
 

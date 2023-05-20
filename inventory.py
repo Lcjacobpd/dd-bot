@@ -25,9 +25,9 @@ FULL NAME MAPPINGS
 """
 FULLNAMES = {
     'gl' : 'Glimmer',
-    'van': 'VanguardToken',
-    'cru': 'CrucibleToken',
-    'cry': 'CryptarchToken',
+    'van': 'Vanguard Tokens',
+    'cru': 'Crucible Tokens',
+    'cry': 'Cryptarch Tokens',
 }
 
 
