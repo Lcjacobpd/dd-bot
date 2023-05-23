@@ -63,6 +63,7 @@ class dice_roller:
     def Roll(self, command: dice_command):
         """Simulate specified dice roll"""
         print("  > Let's roll!...")
+        self.response = "" if self.response is None else self.response
         rollTotal = 0
 
         # Begin building formatted response message        

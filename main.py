@@ -91,13 +91,13 @@ def run():
         roll = dice_roller(message.content)
         if roll.response is not None:
             await message.reply(roll.response)
+            return
 
         # Check for meme reference
         meme = MemeReference(message.author, message.content)
-        if meme.Response is not None:
-            await message.reply(meme.Response)
-
-
+        if meme.response is not None:
+            await message.reply(meme.response)
+            return
     
     bot.run(settings.API_TOKEN)
 

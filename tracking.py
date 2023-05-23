@@ -5,8 +5,6 @@ from reaction import CustomEmoji
 from settings import InventoryAction
 
 
-
-
 class item_handler:
     data = {}
     response = ""
@@ -46,7 +44,7 @@ class item_handler:
 
     def GenerateReceipt(self):
         sign = "+" if self.action == InventoryAction.Add else "-"
-        icon = CustomEmoji.D2Emojis[self.item] if self.item in CustomEmoji.D2Emojis else ""
+        icon = CustomEmoji.d2_emojis[self.item] if self.item in CustomEmoji.d2_emojis else ""
         newTotal = self.data[self.user][self.item]
 
         receipt = F"> *{sign}{self.quantity}* {icon}\n"
@@ -90,5 +88,5 @@ class item_handler:
 
         print(F"  > Fetching inventory for {self.user}...")
         for item in self.data[self.user]:
-            icon = CustomEmoji.D2Emojis[item] if item in CustomEmoji.D2Emojis else ""
+            icon = CustomEmoji.d2_emojis[item] if item in CustomEmoji.d2_emojis else ""
             self.response += F"> {icon} *{self.data[self.user][item]} {item}*\n"
