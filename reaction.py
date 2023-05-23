@@ -12,10 +12,10 @@ class CustomEmoji:
     Nat20 = "<:nat20:818628403119783957>"
 
     D2Emojis = {
-        "Glimmer"           : "<:d2_material_glimmer:1042134639969566750>",
-        "Vanguard Tokens"   : "<:d2_faction_vanguard:1042948486875856949>",
-        "Crucible Tokens"   : "<:d2_faction_crucible:1042948478134923407>",
-        "Cryptarch Tokens"  : "<:d2_faction_cryptarch:1042948479686819930>"
+        "glimmer"           : "<:d2_material_glimmer:1042134639969566750>",
+        "vanguard tokens"   : "<:d2_faction_vanguard:1042948486875856949>",
+        "crucible tokens"   : "<:d2_faction_crucible:1042948478134923407>",
+        "cryptarch tokens"  : "<:d2_faction_cryptarch:1042948479686819930>"
     }
 
 
