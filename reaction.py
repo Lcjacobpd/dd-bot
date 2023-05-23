@@ -2,6 +2,7 @@ import re
 # import string
 from enum import Enum
 
+# TODO: Move into settings?
 """
 CUSTOM DISCORD EMOJIS
 - Copy the ID from discord to add your own
@@ -59,6 +60,7 @@ class MemeReference():
         return response
 
 
+# TODO: Impliment as limited user autofill command
 # class Echo:
 #     """
 #     Puppeteer the bot's messages
