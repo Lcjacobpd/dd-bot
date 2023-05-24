@@ -11,25 +11,11 @@ class dice_command:
         self.modifier = modifier
         self.roll_type = type
 
-    # Unecessary with new regex pattern
-    # def Parse(self, rawCommand: str):
-    #     match = re.match(ROLL_COMMAND_PATTERN, rawCommand)
-    #     if not match: return
-
-    #     groups = match.groupdict()
-    #     self.count    = int(groups["count"])    if groups["count"]    else 1
-    #     self.di       = int(groups["di"])       if groups["di"]       else 20
-    #     self.modifier = int(groups["modifier"]) if groups["modifier"] else 0
-    #     if groups["roll_type"] == "":   self.roll_type = RollType.Normal
-    #     if groups["roll_type"] == "ad": self.roll_type = RollType.Advantage
-    #     if groups["roll_type"] == "wd": self.roll_type = RollType.Disadvantage
-
 
 """
 DICE ROLLER
 - Determine if message contains dice command(s)
-- Parse command(s) for details
-- Generate psuedo random number(s)
+- Generate psuedo random number(s) per parameters
 - Return results formatted for display
 """
 class dice_roller:

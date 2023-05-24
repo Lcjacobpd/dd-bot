@@ -4,10 +4,6 @@ from dotenv import load_dotenv
 from enum import Enum
 
 
-"""
-SETTINGS
-"""
-
 #region Discord Variables
 
 load_dotenv()

@@ -43,24 +43,3 @@ class MemeReference():
         if self.response == CustomEmoji.heyo and str(self.author) != PARENT_ID:
             self.response = "You're not my dad"
         return self.response
-
-
-# TODO: Impliment as limited user autofill command
-# class Echo:
-#     """
-#     Puppeteer the bot's messages
-#     """
-#     def __init__(self) -> None:
-#         self.room = ""
-#         self.text = ""
-
-#     def puppet(self, message) -> None:
-#         self.room = message.split(" ")[0] 
-#         self.text = " ".join(message.split(" ")[1:])
-
-#         if not "#" in self.room:
-#             self.guild = ""
-#             return
-#         else:
-#             self.guild = self.room.split("#")[0]
-#             self.room  = self.room.split("#")[1]

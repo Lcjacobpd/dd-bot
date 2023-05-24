@@ -81,9 +81,6 @@ def run():
     async def on_message(message):
         if message.author == bot.user:
             return  # Don't reply to yourself
-        # DEBUG:
-        # print(type(message))
-        # print(dir(message))
 
         print('Processing new message...')
 
@@ -98,7 +95,18 @@ def run():
         if meme.response is not None:
             await message.reply(meme.response)
             return
-    
+        
+        # Check for any other command if none of these
+        await bot.process_commands(message)
+
+    @bot.command()
+    @commands.is_owner()
+    async def echo(ctx, *message):
+        '''Echo owner's message'''
+        await ctx.message.delete()
+        await ctx.send(" ".join(message))
+
+
     bot.run(settings.API_TOKEN)
 
 
