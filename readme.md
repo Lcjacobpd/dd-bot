@@ -1,5 +1,4 @@
 # dd-bot
-
 Primarily a discord dice bot with flexible command formatting. But it's grown
 to include additional functionality including custom emoji support, an 
 extendable response library and a basic inventory tracking system.
@@ -8,10 +7,12 @@ extendable response library and a basic inventory tracking system.
 ## Roll Command
 The roll command takes advantage of discord's auto complete fields for new
 users; providing a helpful guide through the available roll parameters:
-- count - the number of di(ce) to roll
-- di - the number of sides on the di(ce) being rolled
-- modifier - the skill modifier to include when calculating the total value
-- special - denotes cases of rolling with advantage or disadvantage
+| Name     | Description                                                    |
+| ---      | ---                                                            |
+| count    | the number of di(ce) to roll                                   |
+| di       | the number of sides on the di(ce) being rolled                 |
+| modifier | the skill modifier to include when calculating the total value |
+| special  | denotes cases of rolling with advantage or disadvantage        |
 
 All of these are optional parameters, with the default values resulting in a
 standard d20 roll with no modifier.
@@ -41,9 +42,11 @@ r1d10 slashing and r2d6 thunderous smite
 This feature was a more recent addition to the bot, with the goal of balancing
 the checkbook of large in-game currency sums (specifically glimmer). To this
 end, three commands were introduced:
-- add - Increase the quantity of the specified inventory
-- subtract - Decrease the quantity of the specified inventory
-- view - Display all the user's inventory quantities
+| Name     | Description                                      |
+| ---      | ---                                              |
+| add      | Increase the quantity of the specified inventory |
+| subtract | Decrease the quantity of the specified inventory |
+| view     | Display all the user's inventory quantities      |
 
 These again take advantage of the autocomplete fields, making it a much more
 user friendly experience.
