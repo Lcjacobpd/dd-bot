@@ -37,7 +37,7 @@ class MemeReference():
             return
 
         print("  > Meme reference!")
-        self.response = library[self.Key]
+        self.response = library[self.key]
 
         # Special user case
         if self.response == CustomEmoji.heyo and str(self.author) != PARENT_ID:

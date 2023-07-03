@@ -1,14 +1,19 @@
+import json
 import settings
 import typing
 import discord
 from discord.ext import commands
 from discord import app_commands
 from tracking import item_handler
+from tracking import mote_handler
 from tracking import InventoryAction
+from tracking import MoteAction
 from fate import dice_roller
 from fate import dice_command
 from settings import RollType
 from reaction import MemeReference
+from settings import D2_INFO
+
 
 def run():
     intents = discord.Intents.default()
@@ -77,6 +82,91 @@ def run():
 
     #endregion
 
+    #region D2Information
+
+    async def info_autocompletion(
+        interaction: discord.Interaction,
+        current: str
+    ) -> typing.List[app_commands.Choice[str]]:
+        data = []
+
+        # Navigate through json nodes to current keys
+        options = interaction.data["options"]
+        node = D2_INFO
+        for option in options:
+            step = option["value"]            
+            if step in node.keys():
+                node = node[step]
+
+        choices = node.keys()
+        for choice in choices:
+            if current.lower() in choice.lower():
+                data.append(app_commands.Choice(name=choice, value=choice))
+        return data 
+
+    @bot.tree.command(name="d2_information")
+    @app_commands.autocomplete(category=info_autocompletion, subcategory=info_autocompletion)
+    async def info(interaction: discord.Interaction, category:str, subcategory:str):
+        '''Find information on a D2 topic'''
+        result = D2_INFO[category][subcategory]
+
+        f = discord.File(F"img/{result.icon}")
+        embed = discord.Embed(
+            colour=result.color,
+            title=result.title,
+            description=result.description,
+        )
+        
+        embed.set_thumbnail(url=F"attachment://{result.icon}")                
+        embed.add_field(name="Cost", value=result.cost)
+        embed.insert_field_at(1, name="Days Required", value=result.days_required)
+        embed.insert_field_at(2, name="Reward", value=result.reward)
+        
+        await interaction.response.send_message(file=f, embed=embed)
+
+    #endregion
+
+    #region D2Motes
+
+    async def mote_autocompletion(
+        interaction: discord.Interaction,
+        current: str
+    ) -> typing.List[app_commands.Choice[str]]:
+        data = [ ]
+        file = open(settings.MOTES_FILE)
+        moteData = json.load(file)
+        for key in moteData.keys():
+            choice = str(key)
+            if current.lower() in choice.lower():
+                data.append(app_commands.Choice(name=choice, value=choice))
+        return data         
+
+    @bot.tree.command(name="mote-collect")
+    @app_commands.autocomplete(owner=mote_autocompletion)
+    async def collectMote(interaction: discord.Interaction, owner: str, quantity: int):
+        '''Add mote(s) to a player inventory'''
+        await interaction.response.send_message(mote_handler(MoteAction.Collect, owner, quantity).response)
+
+    @bot.tree.command(name="mote-deposit")
+    @app_commands.autocomplete(owner=mote_autocompletion)
+    async def depositMote(interaction: discord.Interaction, owner: str):
+        '''Deposite all motes from a player inventory'''
+        await interaction.response.send_message(mote_handler(MoteAction.Deposit, owner).response)
+
+    @bot.tree.command(name="mote-reset")
+    async def resetMote(interaction: discord.Interaction):
+        '''Reset Mote tally'''
+        await interaction.response.send_message(mote_handler(MoteAction.Reset).response)
+
+    #endregion
+
+    @bot.command()
+    @commands.is_owner()
+    async def echo(ctx, *message):
+        '''Echo owner's message'''
+        await ctx.message.delete()
+        await ctx.send(" ".join(message))
+
     @bot.event
     async def on_message(message):
         if message.author == bot.user:
@@ -98,14 +188,6 @@ def run():
         
         # Check for any other command if none of these
         await bot.process_commands(message)
-
-    @bot.command()
-    @commands.is_owner()
-    async def echo(ctx, *message):
-        '''Echo owner's message'''
-        await ctx.message.delete()
-        await ctx.send(" ".join(message))
-
 
     bot.run(settings.API_TOKEN)
 
