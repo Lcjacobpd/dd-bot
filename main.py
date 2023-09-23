@@ -40,7 +40,7 @@ def run():
         return data 
 
     @bot.tree.command(name="inventory-add")
-    @app_commands.autocomplete(item=inv_autocompletion)    
+    @app_commands.autocomplete(item=inv_autocompletion)
     async def add(interaction: discord.Interaction, quantity: int, item: str):
         '''Add item(s) to inventory'''
         await interaction.response.send_message(item_handler(interaction.user, InventoryAction.Add, quantity, item).response)
@@ -94,7 +94,7 @@ def run():
         options = interaction.data["options"]
         node = D2_INFO
         for option in options:
-            step = option["value"]            
+            step = option["value"]
             if step in node.keys():
                 node = node[step]
 
@@ -117,10 +117,11 @@ def run():
             description=result.description,
         )
         
-        embed.set_thumbnail(url=F"attachment://{result.icon}")                
-        embed.add_field(name="Cost", value=result.cost)
-        embed.insert_field_at(1, name="Days Required", value=result.days_required)
-        embed.insert_field_at(2, name="Reward", value=result.reward)
+        embed.set_thumbnail(url=F"attachment://{result.icon}")
+        if category == "Downtime":
+            embed.add_field(name="Cost", value=result.cost)
+            embed.insert_field_at(1, name="Days Required", value=result.days_required)
+            embed.insert_field_at(2, name="Reward", value=result.reward)
         
         await interaction.response.send_message(file=f, embed=embed)
 
@@ -139,7 +140,7 @@ def run():
             choice = str(key)
             if current.lower() in choice.lower():
                 data.append(app_commands.Choice(name=choice, value=choice))
-        return data         
+        return data
 
     @bot.tree.command(name="mote-collect")
     @app_commands.autocomplete(owner=mote_autocompletion)
